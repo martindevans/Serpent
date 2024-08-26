@@ -32,8 +32,4 @@
     <PackageReference Include="Wazzy" Version="0.0.29" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Wazzy\Wazzy\Wazzy.csproj" />
-  </ItemGroup>
-
 </Project>
