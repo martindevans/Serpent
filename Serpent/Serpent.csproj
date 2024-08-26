@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="opt.zip" />
+    <None Remove="python3.11.wasm" />
+    <None Remove="python3.11_async.wasm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="opt.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="python3.11.wasm" />
+    <EmbeddedResource Include="python3.11_async.wasm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wasmtime" Version="22.0.0" />
+    <PackageReference Include="Wazzy" Version="0.0.29" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Wazzy\Wazzy\Wazzy.csproj" />
+  </ItemGroup>
+
+</Project>
