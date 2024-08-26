@@ -12,6 +12,7 @@ using Wazzy.WasiSnapshotPreview1.Random;
 namespace Serpent;
 
 public class PythonBuilder
+    : IDisposable
 {
     private readonly Engine _engine;
     private readonly Module _module;
@@ -160,5 +161,10 @@ public class PythonBuilder
         store.SetLimits(_memorySize, 20_000, 1, 1, 1);
 
         return new Python(store, linker.Instantiate(store, _module), fs);
+    }
+
+    public void Dispose()
+    {
+        _module.Dispose();
     }
 }
