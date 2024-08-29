@@ -37,20 +37,20 @@ print()
 print('### Arguments ###')
 print(sys.argv)
 
-for i in range(0, 4):
-    print(i)
-    time.sleep(1)
+#for i in range(0, 4):
+#    print(i)
+#    time.sleep(1)
 
 print()
 print('### Env Vars ###')
 for k, v in sorted(os.environ.items()):
     print(k + ': ' + v)
 
-#print()
-#print("### Recursive Files")
-#print('/')
-#for line in tree(Path('/')):
-#    print(line)
+print()
+print("### Recursive Files")
+print('/')
+for line in tree(Path('/')):
+    print(line)
 
 print()
 print("### Touch");
