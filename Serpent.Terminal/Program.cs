@@ -18,7 +18,8 @@ var python = builder
     .WithStdIn(() => new InMemoryFile(0, input.ToArray()))
     .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error:true))
     .WithStdOut(() => new ConsoleLog(""))
-    .Build(File.ReadAllBytes("code.py"));
+    .WithCode(File.ReadAllBytes("code.py"))
+    .Build();
 
 python.Execute();
 while (python.IsSuspended)

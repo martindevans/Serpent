@@ -1,4 +1,4 @@
-﻿using Wasmtime;
+using Wasmtime;
 using Wazzy.Extensions;
 using Wazzy.WasiSnapshotPreview1.Clock;
 using Wazzy.WasiSnapshotPreview1.Environment;
@@ -8,6 +8,7 @@ using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Fi
 using Wazzy.WasiSnapshotPreview1.Poll;
 using Wazzy.WasiSnapshotPreview1.Process;
 using Wazzy.WasiSnapshotPreview1.Random;
+using Module = Wasmtime.Module;
 
 namespace Serpent;
 
@@ -55,6 +56,9 @@ public sealed class PythonBuilder
         private ulong _fuel;
         private int _memorySize;
 
+        private ReadOnlyMemory<byte>? _pythonCode;
+        private string? _mainFilePath;
+
         internal InnerBuilder(Engine engine, Module module)
         {
             _engine = engine;
@@ -69,6 +73,9 @@ public sealed class PythonBuilder
             _fs = _ => { };
             _fuel = 10_000_000_000;
             _memorySize = 100_000_000;
+
+            _pythonCode = default;
+            _mainFilePath = default;
         }
 
         public InnerBuilder WithFuel(ulong amount)
@@ -126,17 +133,34 @@ public sealed class PythonBuilder
             return this;
         }
 
-        public Python Build(ReadOnlyMemory<byte> python)
+        /// <summary>
+        /// Writes and sets the main file to `/main.py`
+        /// Incompatible with <see cref="WithMainFilePath"/>
+        /// </summary>
+        /// <param name="pythonCode"></param>
+        public InnerBuilder WithCode(ReadOnlyMemory<byte> pythonCode)
         {
-            return Build((ReadOnlyMemory<byte>?)python);
+            _pythonCode = pythonCode;
+            _mainFilePath = "main.py";
+            return this;
         }
 
-        public Python BuildInteractive()
+        /// <summary>
+        /// Sets which file is run from the virtual file system.
+        /// Use with <see cref="WithFilesystem"/>
+        /// Incompatible with <see cref="WithCode"/>
+        /// </summary>
+        /// <param name="vfsPath"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public InnerBuilder WithMainFilePath(string vfsPath)
         {
-            return Build(default);
+            if (_pythonCode != null) throw new InvalidOperationException("Can not use WithCode() and WithMainFilePath() at the same time.");
+            _mainFilePath = vfsPath;
+            return this;
         }
 
-        private Python Build(ReadOnlyMemory<byte>? python)
+        public Python Build()
         {
             // Setup environment variables
             var env = new Dictionary<string, string>(_env());
@@ -146,8 +170,8 @@ public sealed class PythonBuilder
             env.TryAdd("PYTHONUNBUFFERED", "1");
 
             // Specify main.py if some code was supplied, otherwise start in interactive mode
-            var environment = python.HasValue
-                            ? new BasicEnvironment(env, ["python", "main.py"])
+            var environment = _mainFilePath != null
+                            ? new BasicEnvironment(env, ["python", _mainFilePath])
                             : new BasicEnvironment(env, ["python"]);
 
             // Build virtual filesystem
@@ -159,7 +183,9 @@ public sealed class PythonBuilder
                 var archive = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.opt.zip")!;
                 dir.MapReadonlyZipArchiveDirectory("opt", archive);
 
-                dir.CreateInMemoryFile("main.py", python, isReadOnly: true);
+                if (_pythonCode != null) {
+                    dir.CreateInMemoryFile("main.py", _pythonCode, isReadOnly: true);
+                }
 
                 _fs(dir);
             });
