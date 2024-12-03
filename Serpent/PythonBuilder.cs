@@ -1,4 +1,4 @@
-﻿using Wasmtime;
+using Wasmtime;
 using Wazzy.Extensions;
 using Wazzy.WasiSnapshotPreview1.Clock;
 using Wazzy.WasiSnapshotPreview1.Environment;
@@ -8,6 +8,7 @@ using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Fi
 using Wazzy.WasiSnapshotPreview1.Poll;
 using Wazzy.WasiSnapshotPreview1.Process;
 using Wazzy.WasiSnapshotPreview1.Random;
+using Module = Wasmtime.Module;
 
 namespace Serpent;
 
@@ -55,6 +56,9 @@ public sealed class PythonBuilder
         private ulong _fuel;
         private int _memorySize;
 
+        private ReadOnlyMemory<byte>? _pythonCode;
+        private string _mainFilePath;
+
         internal InnerBuilder(Engine engine, Module module)
         {
             _engine = engine;
@@ -69,6 +73,9 @@ public sealed class PythonBuilder
             _fs = _ => { };
             _fuel = 10_000_000_000;
             _memorySize = 100_000_000;
+
+            _pythonCode = default;
+            _mainFilePath = "main.py";
         }
 
         public InnerBuilder WithFuel(ulong amount)
@@ -126,17 +133,27 @@ public sealed class PythonBuilder
             return this;
         }
 
-        public Python Build(ReadOnlyMemory<byte> python)
+        /// <summary>
+        /// Writes and sets the main file.
+        /// Defaults to `/main.py`, you may use <see cref="WithMainFilePath"/> to change this.
+        /// </summary>
+        public InnerBuilder WithCode(ReadOnlyMemory<byte> pythonCode)
         {
-            return Build((ReadOnlyMemory<byte>?)python);
+            _pythonCode = pythonCode;
+            return this;
         }
 
-        public Python BuildInteractive()
+        /// <summary>
+        /// Sets which file is run from the virtual file system.
+        /// <see cref="WithCode"/> can be used to set the file contents.
+        /// </summary>
+        public InnerBuilder WithMainFilePath(string vfsPath)
         {
-            return Build(default);
+            _mainFilePath = vfsPath;
+            return this;
         }
 
-        private Python Build(ReadOnlyMemory<byte>? python)
+        public Python Build()
         {
             // Setup environment variables
             var env = new Dictionary<string, string>(_env());
@@ -145,10 +162,10 @@ public sealed class PythonBuilder
             env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
             env.TryAdd("PYTHONUNBUFFERED", "1");
 
-            // Specify main.py if some code was supplied, otherwise start in interactive mode
-            var environment = python.HasValue
-                            ? new BasicEnvironment(env, ["python", "main.py"])
-                            : new BasicEnvironment(env, ["python"]);
+            // Tell it to run the python file.
+            // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
+            // argv[1] is the file path to run, omitting this would enter interactive mode and use stdin.
+            var environment = new BasicEnvironment(env, ["python", _mainFilePath]);
 
             // Build virtual filesystem
             var builder = new VirtualFileSystemBuilder();
@@ -159,7 +176,8 @@ public sealed class PythonBuilder
                 var archive = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.opt.zip")!;
                 dir.MapReadonlyZipArchiveDirectory("opt", archive);
 
-                dir.CreateInMemoryFile("main.py", python, isReadOnly: true);
+                if (_pythonCode != null)
+                    dir.CreateInMemoryFile(_mainFilePath, _pythonCode, isReadOnly: true);
 
                 _fs(dir);
             });
