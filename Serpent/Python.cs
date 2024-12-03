@@ -66,10 +66,9 @@ public sealed class Python
         }
 
         // Check if we've suspended
-        if (_instance.GetAsyncState() == AsyncState.Suspending)
+        IsSuspended = _instance.GetAsyncState() == AsyncState.Suspending;
+        if (IsSuspended)
         {
-            IsSuspended = true;
-
             _stack = default;
             _stack = _instance.StopUnwind();
             return null;
