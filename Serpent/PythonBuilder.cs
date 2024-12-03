@@ -134,28 +134,25 @@ public sealed class PythonBuilder
         }
 
         /// <summary>
-        /// Writes and sets the main file to `/main.py`
-        /// Incompatible with <see cref="WithMainFilePath"/>
+        /// Writes and sets the main file.
+        /// Defaults to `/main.py`, you may use <see cref="WithMainFilePath"/> to change this.
         /// </summary>
         /// <param name="pythonCode"></param>
         public InnerBuilder WithCode(ReadOnlyMemory<byte> pythonCode)
         {
             _pythonCode = pythonCode;
-            _mainFilePath = "main.py";
             return this;
         }
 
         /// <summary>
         /// Sets which file is run from the virtual file system.
-        /// Use with <see cref="WithFilesystem"/>
-        /// Incompatible with <see cref="WithCode"/>
+        /// <see cref="WithCode"/> can be used to set the file contents.
         /// </summary>
         /// <param name="vfsPath"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         public InnerBuilder WithMainFilePath(string vfsPath)
         {
-            if (_pythonCode != null) throw new InvalidOperationException("Can not use WithCode() and WithMainFilePath() at the same time.");
             _mainFilePath = vfsPath;
             return this;
         }
@@ -169,10 +166,13 @@ public sealed class PythonBuilder
             env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
             env.TryAdd("PYTHONUNBUFFERED", "1");
 
-            // Specify main.py if some code was supplied, otherwise start in interactive mode
-            var environment = _mainFilePath != null
-                            ? new BasicEnvironment(env, ["python", _mainFilePath])
-                            : new BasicEnvironment(env, ["python"]);
+            // Ensure the main file path is set.
+            _mainFilePath ??= "main.py";
+
+            // Tell it to run the python file.
+            // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
+            // argv[1] is the file path to run, omitting this would enter interactive mode and use stdin.
+            var environment = new BasicEnvironment(env, ["python", _mainFilePath]);
 
             // Build virtual filesystem
             var builder = new VirtualFileSystemBuilder();
@@ -184,7 +184,7 @@ public sealed class PythonBuilder
                 dir.MapReadonlyZipArchiveDirectory("opt", archive);
 
                 if (_pythonCode != null) {
-                    dir.CreateInMemoryFile("main.py", _pythonCode, isReadOnly: true);
+                    dir.CreateInMemoryFile(_mainFilePath, _pythonCode, isReadOnly: true);
                 }
 
                 _fs(dir);
