@@ -57,7 +57,7 @@ public sealed class PythonBuilder
         private int _memorySize;
 
         private ReadOnlyMemory<byte>? _pythonCode;
-        private string? _mainFilePath;
+        private string _mainFilePath;
 
         internal InnerBuilder(Engine engine, Module module)
         {
@@ -75,7 +75,7 @@ public sealed class PythonBuilder
             _memorySize = 100_000_000;
 
             _pythonCode = default;
-            _mainFilePath = default;
+            _mainFilePath = "main.py";
         }
 
         public InnerBuilder WithFuel(ulong amount)
@@ -137,7 +137,6 @@ public sealed class PythonBuilder
         /// Writes and sets the main file.
         /// Defaults to `/main.py`, you may use <see cref="WithMainFilePath"/> to change this.
         /// </summary>
-        /// <param name="pythonCode"></param>
         public InnerBuilder WithCode(ReadOnlyMemory<byte> pythonCode)
         {
             _pythonCode = pythonCode;
@@ -148,9 +147,6 @@ public sealed class PythonBuilder
         /// Sets which file is run from the virtual file system.
         /// <see cref="WithCode"/> can be used to set the file contents.
         /// </summary>
-        /// <param name="vfsPath"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
         public InnerBuilder WithMainFilePath(string vfsPath)
         {
             _mainFilePath = vfsPath;
@@ -166,9 +162,6 @@ public sealed class PythonBuilder
             env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
             env.TryAdd("PYTHONUNBUFFERED", "1");
 
-            // Ensure the main file path is set.
-            _mainFilePath ??= "main.py";
-
             // Tell it to run the python file.
             // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
             // argv[1] is the file path to run, omitting this would enter interactive mode and use stdin.
@@ -183,9 +176,8 @@ public sealed class PythonBuilder
                 var archive = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.opt.zip")!;
                 dir.MapReadonlyZipArchiveDirectory("opt", archive);
 
-                if (_pythonCode != null) {
+                if (_pythonCode != null)
                     dir.CreateInMemoryFile(_mainFilePath, _pythonCode, isReadOnly: true);
-                }
 
                 _fs(dir);
             });
