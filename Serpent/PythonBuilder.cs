@@ -8,6 +8,7 @@ using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Fi
 using Wazzy.WasiSnapshotPreview1.Poll;
 using Wazzy.WasiSnapshotPreview1.Process;
 using Wazzy.WasiSnapshotPreview1.Random;
+using Wazzy.WasiSnapshotPreview1.Socket;
 using Module = Wasmtime.Module;
 
 namespace Serpent;
@@ -53,6 +54,7 @@ public sealed class PythonBuilder
         private Func<IFile> _stderr;
         private Func<IReadOnlyDictionary<string, string>> _env;
         private Action<DirectoryBuilder> _fs;
+        private Func<IWasiSocket> _socket;
         private ulong _fuel;
         private int _memorySize;
 
@@ -71,6 +73,7 @@ public sealed class PythonBuilder
             _stderr = () => new ZeroFile();
             _env = () => new Dictionary<string, string>();
             _fs = _ => { };
+            _socket = () => new NonFunctionalSocket();
             _fuel = 10_000_000_000;
             _memorySize = 100_000_000;
 
@@ -130,6 +133,12 @@ public sealed class PythonBuilder
         public InnerBuilder WithFilesystem(Action<DirectoryBuilder> fs)
         {
             _fs = fs;
+            return this;
+        }
+
+        public InnerBuilder WithSocket(Func<IWasiSocket> socket)
+        {
+            _socket = socket;
             return this;
         }
 
@@ -193,6 +202,7 @@ public sealed class PythonBuilder
             linker.DefineFeature(new AsyncifyPoll(clock));
             linker.DefineFeature(new AsyncifyYieldProcess());
             linker.DefineFeature(fs);
+            linker.DefineFeature(_socket());
 
             // Set sensible limits on the store
             var store = new Store(_engine)
