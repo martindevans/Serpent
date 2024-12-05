@@ -4,7 +4,7 @@ using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Fi
 
 var e = new Engine(new Config().WithFuelConsumption(true).WithOptimizationLevel(OptimizationLevel.Speed));
 
-using var builder = PythonBuilder.Load(e);
+using var builder = PythonBuilder.Load(e, "cache.module");
 
 var python = builder
     .Create()

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Wasmtime;
 using Wazzy.Extensions;
 using Wazzy.WasiSnapshotPreview1.Clock;
@@ -16,6 +17,8 @@ namespace Serpent;
 public sealed class PythonBuilder
     : IDisposable
 {
+    private const string EmbeddedWasmResourcePath = "Serpent.python3.11_async.wasm";
+
     private readonly Module _module;
     private readonly Engine _engine;
 
@@ -25,12 +28,75 @@ public sealed class PythonBuilder
         _engine = engine;
     }
 
-    public static PythonBuilder Load(Engine engine)
+    /// <summary>
+    /// Create a Python builder. This loads and compiles the Python module so it can be very slow (several seconds). Supplying a cache
+    /// path will serialize the compiled module, which will significantly speed up the next load. This cache is <b>not portable</b>; do not
+    /// move it between machines.
+    /// </summary>
+    /// <param name="engine"></param>
+    /// <param name="cache">Optional cache path, to speed up subsequent loads</param>
+    /// <returns></returns>
+    public static PythonBuilder Load(Engine engine, string? cache = null)
     {
-        const string path = "Serpent.python3.11_async.wasm";
-        var module = Module.FromStream(engine, path, System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(path)!);
+        var module = LoadCache(engine, cache);
+        if (module == null)
+        {
+            module = Module.FromStream(engine, EmbeddedWasmResourcePath, Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedWasmResourcePath)!);
+            SaveCache(module, cache);
+        }
+
         return new PythonBuilder(module, engine);
     }
+
+    #region caching
+    private static void TryDelete(string path)
+    {
+        if (File.Exists(path))
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch
+            {
+                // We tried our best to delete it
+            }
+        }
+    }
+
+    private static Module? LoadCache(Engine engine, string? path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            return null;
+
+        try
+        {
+            return Module.DeserializeFile(engine, "python", path);
+        }
+        catch
+        {
+            // Failed to load the cached module for some reason, delete it.
+            TryDelete(path);
+        }
+
+        return null;
+    }
+
+    private static void SaveCache(Module module, string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        try
+        {
+            File.WriteAllBytes(path, module.Serialize());
+        }
+        catch
+        {
+            // Something went wrong saving the cache.
+        }
+    }
+    #endregion
 
     public InnerBuilder Create()
     {
@@ -251,7 +317,7 @@ public sealed class PythonBuilder
             builder.WithClock((IVFSClock)_clock());
             builder.WithVirtualRoot(dir =>
             {
-                var archive = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.opt.zip")!;
+                var archive = Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.opt.zip")!;
                 dir.MapReadonlyZipArchiveDirectory("opt", archive);
 
                 if (_pythonCode != null)
