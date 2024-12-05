@@ -57,6 +57,7 @@ public sealed class PythonBuilder
         private Func<IWasiSocket> _socket;
         private ulong _fuel;
         private int _memorySize;
+        private string? _pythonCachePath;
 
         private ReadOnlyMemory<byte>? _pythonCode;
         private string _mainFilePath;
@@ -72,6 +73,7 @@ public sealed class PythonBuilder
             _stdout = () => new ZeroFile();
             _stderr = () => new ZeroFile();
             _env = () => new Dictionary<string, string>();
+            _pythonCachePath = default;
             _fs = _ => { };
             _socket = () => new NonFunctionalSocket();
             _fuel = 10_000_000_000;
@@ -143,6 +145,16 @@ public sealed class PythonBuilder
         }
 
         /// <summary>
+        /// Enable caching of .pyc files in the given folder. This should be mapped to a directory that is persistent between runs.
+        /// See <see href="https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPYCACHEPREFIX">PYTHONPYCACHEPREFIX</see>
+        /// </summary>
+        public InnerBuilder WithPythonCachePath(string vfsPath)
+        {
+            _pythonCachePath = vfsPath;
+            return this;
+        }
+
+        /// <summary>
         /// Writes and sets the main file.
         /// Defaults to `/main.py`, you may use <see cref="WithMainFilePath"/> to change this.
         /// </summary>
@@ -168,8 +180,11 @@ public sealed class PythonBuilder
             var env = new Dictionary<string, string>(_env());
             env.TryAdd("PYTHONHOME", "/opt/wasi-python/lib/python3.11");
             env.TryAdd("PYTHONPATH", "/opt/wasi-python/lib/python3.11");
-            env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
             env.TryAdd("PYTHONUNBUFFERED", "1");
+            if (_pythonCachePath != null)
+                env.TryAdd("PYTHONPYCACHEPREFIX", _pythonCachePath);
+            else
+                env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
 
             // Tell it to run the python file.
             // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
