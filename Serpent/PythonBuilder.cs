@@ -55,7 +55,6 @@ public sealed class PythonBuilder
         private Action<DirectoryBuilder> _fs;
         private ulong _fuel;
         private int _memorySize;
-        private bool _pythonCacheEnabled;
         private string? _pythonCachePath;
 
         private ReadOnlyMemory<byte>? _pythonCode;
@@ -72,7 +71,6 @@ public sealed class PythonBuilder
             _stdout = () => new ZeroFile();
             _stderr = () => new ZeroFile();
             _env = () => new Dictionary<string, string>();
-            _pythonCacheEnabled = false;
             _pythonCachePath = default;
             _fs = _ => { };
             _fuel = 10_000_000_000;
@@ -138,23 +136,12 @@ public sealed class PythonBuilder
         }
 
         /// <summary>
-        /// Enables python's caching with .pyc files.
-        /// Defaults as disabled due to .py files possibly being in a readonly directory.
-        /// </summary>
-        public InnerBuilder WithPythonCacheEnabled(bool enabled)
-        {
-            _pythonCacheEnabled = enabled;
-            return this;
-        }
-
-        /// <summary>
         /// Enable caching of .pyc files in the given folder. This should be mapped to a directory that is persistent between runs.
         /// See <see href="https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPYCACHEPREFIX">PYTHONPYCACHEPREFIX</see>
         /// </summary>
         public InnerBuilder WithPythonCachePath(string vfsPath)
         {
             _pythonCachePath = vfsPath;
-            WithPythonCacheEnabled(true);
             return this;
         }
 
@@ -185,10 +172,10 @@ public sealed class PythonBuilder
             env.TryAdd("PYTHONHOME", "/opt/wasi-python/lib/python3.11");
             env.TryAdd("PYTHONPATH", "/opt/wasi-python/lib/python3.11");
             env.TryAdd("PYTHONUNBUFFERED", "1");
-            if (!_pythonCacheEnabled)
-                env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
             if (_pythonCachePath != null)
                 env.TryAdd("PYTHONPYCACHEPREFIX", _pythonCachePath);
+            else
+                env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
 
             // Tell it to run the python file.
             // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
