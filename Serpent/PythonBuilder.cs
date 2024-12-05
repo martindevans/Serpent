@@ -73,9 +73,10 @@ public sealed class PythonBuilder
             _stdout = () => new ZeroFile();
             _stderr = () => new ZeroFile();
             _env = () => new Dictionary<string, string>();
-            _pythonCachePath = default;
             _fs = _ => { };
             _socket = () => new NonFunctionalSocket();
+
+            _pythonCachePath = default;
             _fuel = 10_000_000_000;
             _memorySize = 100_000_000;
 
@@ -83,18 +84,34 @@ public sealed class PythonBuilder
             _mainFilePath = "main.py";
         }
 
+        /// <summary>
+        /// Configure the maximum amount of fuel that can be used before execution is terminated. 1 fuel approximately corresponds to 1 wasm instruction.
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
         public InnerBuilder WithFuel(ulong amount)
         {
             _fuel = amount;
             return this;
         }
 
+        /// <summary>
+        /// Limit the maximum memory that can be used (in bytes)
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public InnerBuilder WithMemoryLimit(int bytes)
         {
             _memorySize = bytes;
             return this;
         }
 
+        /// <summary>
+        /// Configure the clock to use in this execution environment
+        /// </summary>
+        /// <typeparam name="TClock"></typeparam>
+        /// <param name="clock"></param>
+        /// <returns></returns>
         public InnerBuilder WithClock<TClock>(Func<IWasiClock> clock)
             where TClock : class, IWasiClock, IVFSClock
         {
@@ -102,42 +119,79 @@ public sealed class PythonBuilder
             return this;
         }
 
+        /// <summary>
+        /// Configure the random number provider to use in this execution environment
+        /// </summary>
+        /// <param name="random"></param>
+        /// <returns></returns>
         public InnerBuilder WithRandomSource(Func<IWasiRandomSource> random)
         {
             _random = random;
             return this;
         }
 
+        /// <summary>
+        /// Configure a file to use as STDIN in this execution environment
+        /// </summary>
+        /// <param name="stdin"></param>
+        /// <returns></returns>
         public InnerBuilder WithStdIn(Func<IFile> stdin)
         {
             _stdin = stdin;
             return this;
         }
 
+        /// <summary>
+        /// Configure a file to use as STDOUT in this execution environment
+        /// </summary>
+        /// <param name="stdout"></param>
+        /// <returns></returns>
         public InnerBuilder WithStdOut(Func<IFile> stdout)
         {
             _stdout = stdout;
             return this;
         }
 
+        /// <summary>
+        /// Configure a file to use as STDERR in this execution environment
+        /// </summary>
+        /// <param name="stderr"></param>
+        /// <returns></returns>
         public InnerBuilder WithStdErr(Func<IFile> stderr)
         {
             _stderr = stderr;
             return this;
         }
 
+        /// <summary>
+        /// Configure the environment variables to use in this execution environment.
+        /// See <a href="https://docs.python.org/3/using/cmdline.html#environment-variables">Python documentation</a>
+        /// for special Python env vars.
+        /// </summary>
+        /// <param name="env"></param>
+        /// <returns></returns>
         public InnerBuilder WithEnv(Func<IReadOnlyDictionary<string, string>> env)
         {
             _env = env;
             return this;
         }
 
+        /// <summary>
+        /// Configure the root directory of the virtual filesystem to use in this execution environment
+        /// </summary>
+        /// <param name="fs"></param>
+        /// <returns></returns>
         public InnerBuilder WithFilesystem(Action<DirectoryBuilder> fs)
         {
             _fs = fs;
             return this;
         }
 
+        /// <summary>
+        /// Configure the network socket implementation to use in this execution environment
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <returns></returns>
         public InnerBuilder WithSocket(Func<IWasiSocket> socket)
         {
             _socket = socket;

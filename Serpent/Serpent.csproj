@@ -7,7 +7,7 @@
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Serpent</Title>
-    <Version>0.0.24</Version>
+    <Version>0.0.25</Version>
     <Authors>Martin Evans</Authors>
     <Description>A pure WASM based Python runner</Description>
     <PackageProjectUrl>https://github.com/martindevans/Serpent</PackageProjectUrl>
