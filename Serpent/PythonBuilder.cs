@@ -148,7 +148,7 @@ public sealed class PythonBuilder
         }
 
         /// <summary>
-        /// Sets a path to use for caching of .pyc files.
+        /// Enable caching of .pyc files in the given folder. This should be mapped to a directory that is persistent between runs.
         /// See <see href="https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPYCACHEPREFIX">PYTHONPYCACHEPREFIX</see>
         /// </summary>
         public InnerBuilder WithPythonCachePath(string vfsPath)
