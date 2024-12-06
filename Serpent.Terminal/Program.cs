@@ -14,9 +14,16 @@ var python = builder
     .WithCode(File.ReadAllBytes("code.py"))
     .Build();
 
+var delay = 1;
 python.Execute();
 while (python.IsSuspended)
 {
     python.Execute();
-    await Task.Delay(256);
+
+    await Task.Delay(delay);
+    Thread.Yield();
+
+    delay <<= 1;
+    if (delay > 256)
+        delay = 1;
 }
