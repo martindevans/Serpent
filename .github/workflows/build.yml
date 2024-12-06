@@ -31,10 +31,16 @@ jobs:
       - name: CPython Build in devcontainer
         uses: devcontainers/ci@v0.3
         with:
-          imageName: ghcr.io/Avril112113/build-cpython-wasi
-          cacheFrom: ghcr.io/Avril112113/build-cpython-wasi
+          imageName: ghcr.io/avril112113/build_cpython_wasi
+          cacheFrom: ghcr.io/avril112113/build_cpython_wasi
           push: always
           env: |
-            CPYTHON_BRANCH=${{ cpython_branch }}
-            OPTIMIZE_LEVEL=${{ optimize_level }}
+            CPYTHON_BRANCH=${{ inputs.cpython_branch }}
+            OPTIMIZE_LEVEL=${{ inputs.optimize_level }}
           runCmd: ./build-wasi.sh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: ./out/
