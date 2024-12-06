@@ -114,6 +114,7 @@ public sealed class PythonBuilder
         private readonly Engine _engine;
         private readonly Module _module;
 
+        private Action<Linker> _linker;
         private Func<IWasiClock> _clock;
         private Func<IWasiRandomSource> _random;
         private Func<IFile> _stdin;
@@ -134,6 +135,7 @@ public sealed class PythonBuilder
             _engine = engine;
             _module = module;
 
+            _linker = _ => {};
             _clock = () => new RealtimeClock();
             _random = () => new CryptoRandomSource();
             _stdin = () => new ZeroFile();
@@ -149,6 +151,12 @@ public sealed class PythonBuilder
 
             _pythonCode = default;
             _mainFilePath = default;
+        }
+
+        public InnerBuilder WithLinker(Action<Linker> linker)
+        {
+            _linker = linker;
+            return this;
         }
 
         /// <summary>
@@ -347,6 +355,7 @@ public sealed class PythonBuilder
             linker.DefineFeature(new AsyncifyYieldProcess());
             linker.DefineFeature(fs);
             linker.DefineFeature(_socket());
+            _linker(linker);
 
             // Set sensible limits on the store
             var store = new Store(_engine)
