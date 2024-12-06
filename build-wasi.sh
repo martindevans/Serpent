@@ -4,15 +4,16 @@ set -e
 
 # Branch of CPython to clone
 # If changed, manually delete ./cpython/ directory
-CPYTHON_BRANCH=v3.13.1
+CPYTHON_BRANCH="${CPYTHON_BRANCH:-v3.13.1}"
 # Weather or not to asyncify and optimize using wasm-opt
-ASYNCIFY_OPTIMIZE=1
+ASYNCIFY_OPTIMIZE="${ASYNCIFY_OPTIMIZE:-1}"
+OPTIMIZE_LEVEL="${OPTIMIZE_LEVEL:-2}"
 # Remove all __pycache__ from the standard library, as it reduces size by around 2x
 # It may help with load times to keep them.
-REMOVE_PYCACHE=1
+REMOVE_PYCACHE="${REMOVE_PYCACHE:-1}"
 # Export the Python API, this increases output size by a little bit.
 # Not sure how usable it is.
-EXPORT_PYTHON_API=0
+EXPORT_PYTHON_API="${EXPORT_PYTHON_API:-0}"
 
 
 # Pythons 'optional' dependencies
@@ -86,7 +87,7 @@ if [ $ASYNCIFY_OPTIMIZE -eq "1" ]
 then
     echo Asyncify and optimize with wasm-opt
     PYTHON_WASM_FILE=($OUT_PATH/python3.*.wasm)
-    wasm-opt $PYTHON_WASM_FILE -o ${PYTHON_WASM_FILE%.*}_async.wasm --asyncify -O2
+    wasm-opt $PYTHON_WASM_FILE -o ${PYTHON_WASM_FILE%.*}_async.wasm --asyncify -O$OPTIMIZE_LEVEL
 fi
 
 popd > /dev/null
