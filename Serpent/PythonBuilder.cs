@@ -17,7 +17,7 @@ namespace Serpent;
 public sealed class PythonBuilder
     : IDisposable
 {
-    private const string EmbeddedWasmResourcePath = "Serpent.python3.11_async.wasm";
+    private const string EmbeddedWasmResourcePath = "Serpent.python3.13_async.wasm";
 
     private readonly Module _module;
     private readonly Engine _engine;
@@ -298,8 +298,11 @@ public sealed class PythonBuilder
         {
             // Setup environment variables
             var env = new Dictionary<string, string>(_env());
-            env.TryAdd("PYTHONHOME", "/opt/wasi-python/lib/python3.11");
-            env.TryAdd("PYTHONPATH", "/opt/wasi-python/lib/python3.11");
+            // Python expects to find `{PYTHONHOME}/lib/pythonX.YY/` for the standard libraries
+            env.TryAdd("PYTHONHOME", "/");
+            // Removes 'Could not find platform libraries' warnings with older Python versions.
+            env.TryAdd("PYTHONPATH", "/");
+            // Make stdout and stderr streams unbuffered.
             env.TryAdd("PYTHONUNBUFFERED", "1");
             if (_pythonCachePath != null)
                 env.TryAdd("PYTHONPYCACHEPREFIX", _pythonCachePath);
@@ -317,8 +320,8 @@ public sealed class PythonBuilder
             builder.WithClock((IVFSClock)_clock());
             builder.WithVirtualRoot(dir =>
             {
-                var archive = Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.opt.zip")!;
-                dir.MapReadonlyZipArchiveDirectory("opt", archive);
+                var archive = Assembly.GetExecutingAssembly().GetManifestResourceStream("Serpent.lib.zip")!;
+                dir.MapReadonlyZipArchiveDirectory("lib", archive);
 
                 if (_pythonCode != null)
                     dir.CreateInMemoryFile(_mainFilePath, _pythonCode, isReadOnly: true);

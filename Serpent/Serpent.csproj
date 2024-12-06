@@ -7,27 +7,27 @@
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Serpent</Title>
-    <Version>0.0.26</Version>
+    <Version>0.0.27</Version>
     <Authors>Martin Evans</Authors>
     <Description>A pure WASM based Python runner</Description>
     <PackageProjectUrl>https://github.com/martindevans/Serpent</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="opt.zip" />
-    <None Remove="python3.11_async.wasm" />
+    <None Remove="lib.zip" />
+    <None Remove="python3.13_async.wasm" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="opt.zip">
+    <EmbeddedResource Include="lib.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="python3.11_async.wasm" />
+    <EmbeddedResource Include="python3.13_async.wasm" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Wasmtime" Version="22.0.0" />
-    <PackageReference Include="Wazzy" Version="0.0.30" />
+    <PackageReference Include="Wazzy" Version="0.0.32" />
   </ItemGroup>
 
 </Project>
