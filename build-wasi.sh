@@ -32,9 +32,9 @@ fi
 # This will also undo if the script errors.
 pushd ./cpython/ > /dev/null
 
-CFLAGS="-g -D_WASI_EMULATED_GETPID -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -I$OPT_DEPS_PATH/include"
-CPPFLAGS="${CFLAGS}"
-LIBS="-L$OPT_DEPS_PATH/lib"
+export CFLAGS="-g -D_WASI_EMULATED_GETPID -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -I$OPT_DEPS_PATH/include"
+export CPPFLAGS="${CFLAGS}"
+export LIBS="-L$OPT_DEPS_PATH/lib"
 
 if [ $EXPORT_PYTHON_API -eq "1" ]
 then
