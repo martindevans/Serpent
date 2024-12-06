@@ -1,20 +1,27 @@
 # Serpent
-TODO: Rest of the readme.
+
+A WASM based Python environment for dotnet.
 
 ## Updating CPython wasm binary and standard library.
-Serpent uses pre-built binaries and python standard libraries from [Avril112113/build-cpython-wasi](https://github.com/Avril112113/build-cpython-wasi)  
-Alternatively you can manually build [python/cpython](https://github.com/python/cpython), see notes below.  
+Serpent uses pre-built binaries and python standard libraries from [Avril112113/build-cpython-wasi](https://github.com/Avril112113/build-cpython-wasi). This repo contains a GitHub action which builds the wasm binary.  
+Alternatively you can manually build [python/cpython](https://github.com/python/cpython).
 
-**Only if you have built CPython manually;**  
-After successfully building cpython, make sure to have the necessary files;  
-`make -C ./cross-build/wasm32-wasip1 install DESTDIR=./tmp`  
-After running the above, the following paths will be relevant below.  
-`./cross-build/wasm32-wasip1/tmp/usr/local/lib/python.YY`  
-`./cross-build/wasm32-wasip1/tmp/usr/local/bin/python3.13.wasm`
+#### Manually Building CPython
 
-**Setting up files for Serpent**  
-You should have a folder that looks like `./lib/python3.YY/**.py`.  
-Zip the `python3.YY` folder and rename it to `lib.zip`.  
+After successfully building cpython, make sure to have the necessary files:
 
-Now you have `python3.YY_async.wasm` and `lib.zip`.  
-That's all that's needed to use a different python version.  
+> `make -C ./cross-build/wasm32-wasip1 install DESTDIR=./tmp`
+
+Running this will produce:
+
+> `./cross-build/wasm32-wasip1/tmp/usr/local/lib/python3.YY`  
+> `./cross-build/wasm32-wasip1/tmp/usr/local/bin/python3.13.wasm`
+
+Extracting files for Serpent:
+
+1. Zip the Python3.YY folder, zip it and rename it to `lib.zip`. Replace [lib.zip](https://github.com/martindevans/Serpent/blob/master/Serpent/lib.zip).
+2. Take `python3.13.wasm` and asyncify it with [binaryen](https://github.com/WebAssembly/binaryen):
+
+> ./wasm-opt python3.13.wasm --asyncify -O2 --output python3.13_async.wasm
+
+3. Take `python3.13_async.wasm` and replace `ython3.13_async.wasm` [here](https://github.com/martindevans/Serpent/tree/master/Serpent).
