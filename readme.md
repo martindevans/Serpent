@@ -6,7 +6,7 @@ Instructions:
 - Clone this repo  
 - Open in devcontainer (in vscode)  
 - Wait patiently  
-- Edit `./build-wasi.sh` to your needs  
+- Read `./build-wasi.sh` to customize build  
 - Run `./build-wasi.sh`  
 - Wait patiently  
 - Check `./out/`  

@@ -1,9 +1,11 @@
 # Ensure if a command fails, the script exits.
 set -e
 
+# The following vars can be changed to customize the build, for example;
+# OPTIMIZE_LEVEL=4 CPYTHON_BRANCH=v3.13.1 ./build-wasi.sh
 
 # Branch of CPython to clone
-# If changed, manually delete ./cpython/ directory
+# If changed, manually delete ./cpython/ directory if it exists.
 CPYTHON_BRANCH="${CPYTHON_BRANCH:-v3.13.1}"
 # Weather or not to asyncify and optimize using wasm-opt
 ASYNCIFY_OPTIMIZE="${ASYNCIFY_OPTIMIZE:-1}"
