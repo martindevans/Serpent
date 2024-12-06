@@ -39,11 +39,26 @@ jobs:
             OPTIMIZE_LEVEL=${{ inputs.optimize_level }}
           runCmd: ./build-wasi.sh
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      # Output everything
+      - uses: actions/upload-artifact@v4
         with:
           name: CPython-WASI-${{ inputs.cpython_branch }}
-          path: |
-            ./out/python3.*.wasm
-            ./out/lib
-            ./out/for_external_builds
+          path: ./out/
+          if-no-files-found: error
+
+      # Spesific stuff
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python3.??.wasm
+          path: ./out/python3.??.wasm
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python3.??_async.wasm
+          path: ./out/python3.??.wasm
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lib
+          path: ./out/lib
+          if-no-files-found: error
