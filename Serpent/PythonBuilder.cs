@@ -18,7 +18,8 @@ public sealed class PythonBuilder
     : IDisposable
 {
     private const string EmbeddedWasmResourcePath = "Serpent.python3.13_async.wasm";
-
+    private const string DefaultPythonFileName = "main.py";
+    
     private readonly Module _module;
     private readonly Engine _engine;
 
@@ -310,14 +311,13 @@ public sealed class PythonBuilder
                 env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
 
             var interactive = !(_pythonCode.HasValue || _mainFilePath != null);
-            _mainFilePath ??= "main.py";
             
             // Tell it to run the python file.
             // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
             // argv[1] is the file path to run, omitting this would enter interactive mode and use stdin.
             var environment = interactive
                             ? new BasicEnvironment(env, [ "python" ])
-                            : new BasicEnvironment(env, [ "python", _mainFilePath ]);
+                            : new BasicEnvironment(env, [ "python", _mainFilePath ?? DefaultPythonFileName ]);
 
 
             // Build virtual filesystem
@@ -330,7 +330,7 @@ public sealed class PythonBuilder
                 dir.MapReadonlyZipArchiveDirectory("lib", archive);
 
                 if (_pythonCode != null)
-                    dir.CreateInMemoryFile(_mainFilePath, _pythonCode, isReadOnly: true);
+                    dir.CreateInMemoryFile(_mainFilePath ?? DefaultPythonFileName, _pythonCode, isReadOnly: true);
 
                 _fs(dir);
             });
