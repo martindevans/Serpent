@@ -126,7 +126,7 @@ public sealed class PythonBuilder
         private string? _pythonCachePath;
 
         private ReadOnlyMemory<byte>? _pythonCode;
-        private string _mainFilePath;
+        private string? _mainFilePath;
 
         internal InnerBuilder(Engine engine, Module module)
         {
@@ -147,7 +147,7 @@ public sealed class PythonBuilder
             _memorySize = 100_000_000;
 
             _pythonCode = default;
-            _mainFilePath = "main.py";
+            _mainFilePath = default;
         }
 
         /// <summary>
@@ -309,12 +309,15 @@ public sealed class PythonBuilder
             else
                 env.TryAdd("PYTHONDONTWRITEBYTECODE", "1");
 
+            var interactive = !(_pythonCode.HasValue || _mainFilePath != null);
+            _mainFilePath ??= "main.py";
+            
             // Tell it to run the python file.
             // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
             // argv[1] is the file path to run, omitting this would enter interactive mode and use stdin.
-            var environment = _pythonCode.HasValue
-                            ? new BasicEnvironment(env, [ "python", _mainFilePath ])
-                            : new BasicEnvironment(env, [ "python" ]);
+            var environment = interactive
+                            ? new BasicEnvironment(env, [ "python" ])
+                            : new BasicEnvironment(env, [ "python", _mainFilePath ]);
 
 
             // Build virtual filesystem
