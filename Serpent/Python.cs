@@ -17,15 +17,33 @@ public sealed class Python
 
     private SavedStack? _stack;
 
+    /// <summary>
+    /// Check if this runtime is capable of being async suspended
+    /// </summary>
     public bool IsAsync { get; }
+
+    /// <summary>
+    /// Check if this runtime is currently suspended in an async operation
+    /// </summary>
     public bool IsSuspended { get; private set; }
 
+    /// <summary>
+    /// Check if this runtime is completed. A completed runtime cannot be used again and should be disposed.
+    /// </summary>
+    public bool IsCompleted { get; private set; }
+
+    /// <summary>
+    /// Get or set the amount of fuel in this runtime
+    /// </summary>
     public ulong Fuel
     {
         get => _store.Fuel;
         set => _store.Fuel = value;
     }
 
+    /// <summary>
+    /// Get the current memory usage of this runtime
+    /// </summary>
     public long MemoryBytes => _memory.GetLength();
 
     internal Python(Store store, Instance instance, VirtualFileSystem fs)
@@ -50,6 +68,9 @@ public sealed class Python
 
     public int? Execute()
     {
+        if (IsCompleted)
+            throw new InvalidOperationException("Cannot Execute() a completed Python runtime");
+
         // Begin resuming from a previous async suspend
         if (_stack.HasValue)
             _instance.StartRewind(_stack.Value);
@@ -61,6 +82,7 @@ public sealed class Python
         }
         catch (WasmtimeException e) when (e.InnerException is ThrowExitProcessException t)
         {
+            IsCompleted = true;
             IsSuspended = false;
             return t.ExitCode;
         }
@@ -74,6 +96,7 @@ public sealed class Python
             return null;
         }
 
+        IsCompleted = true;
         return 0;
     }
 }

@@ -312,7 +312,10 @@ public sealed class PythonBuilder
             // Tell it to run the python file.
             // argv[0] is the 'command used' which doesn't apply here, so we use a reasonable default.
             // argv[1] is the file path to run, omitting this would enter interactive mode and use stdin.
-            var environment = new BasicEnvironment(env, ["python", _mainFilePath]);
+            var environment = _pythonCode.HasValue
+                            ? new BasicEnvironment(env, [ "python", _mainFilePath ])
+                            : new BasicEnvironment(env, [ "python" ]);
+
 
             // Build virtual filesystem
             var builder = new VirtualFileSystemBuilder();

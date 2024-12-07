@@ -10,6 +10,7 @@ var python = builder
     .Create()
     .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error:true))
     .WithStdOut(() => new ConsoleLog(""))
+    .WithStdIn(() => new InMemoryFile(0, "print('hello world')"u8))
     .WithMainFilePath("code.py")
     .WithCode(File.ReadAllBytes("code.py"))
     .Build();
@@ -21,7 +22,6 @@ while (python.IsSuspended)
     python.Execute();
 
     await Task.Delay(delay);
-    Thread.Yield();
 
     delay <<= 1;
     if (delay > 256)
