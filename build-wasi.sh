@@ -85,6 +85,7 @@ mkdir $OUT_PATH/for_external_builds/lib
 cp -rf ./cross-build/wasm32-wasip1/libpython3.*.a $OUT_PATH/for_external_builds/lib/
 find ./cross-build/wasm32-wasip1/Modules/ -name \*.a -exec cp {} $OUT_PATH/for_external_builds/lib \;
 find $OPT_DEPS_PATH/lib -name \*.a -exec cp {} $OUT_PATH/for_external_builds/lib \;
+rm -rf $OUT_PATH/lib/python3.*/config-3.*-*
 
 if [ $REMOVE_PYCACHE -eq "1" ]
 then
