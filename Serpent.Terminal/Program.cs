@@ -10,8 +10,8 @@ var python = builder
     .Create()
     .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error:true))
     .WithStdOut(() => new ConsoleLog(""))
-    .WithStdIn(() => new InMemoryFile(0, "print('hello world')"u8))
-    .WithMainFilePath("code.py")
+    //.WithStdIn(() => new InMemoryFile(0, "print('hello world')"u8))
+    //.WithMainFilePath("code.py")
     .WithCode(File.ReadAllBytes("code.py"))
     .Build();
 
