@@ -80,9 +80,9 @@ cp -rf ./cross-build/wasm32-wasip1/tmp/usr/local/lib $OUT_PATH/
 # Very handy for implementing a custom C module to use wasm imports.
 mkdir $OUT_PATH/for_external_builds/
 mkdir $OUT_PATH/for_external_builds/include
-cp -rf ./cross-build/wasm32-wasip1/tmp/usr/local/include/python3.13/pyconfig.h $OUT_PATH/for_external_builds/include/pyconfig.h
+cp -rf ./cross-build/wasm32-wasip1/tmp/usr/local/include/python3.*/pyconfig.h $OUT_PATH/for_external_builds/include/pyconfig.h
 mkdir $OUT_PATH/for_external_builds/lib
-cp -rf ./cross-build/wasm32-wasip1/libpython3.13.a $OUT_PATH/for_external_builds/lib/libpython3.13.a
+cp -rf ./cross-build/wasm32-wasip1/libpython3.*.a $OUT_PATH/for_external_builds/lib/
 find ./cross-build/wasm32-wasip1/Modules/ -name \*.a -exec cp {} $OUT_PATH/for_external_builds/lib \;
 find $OPT_DEPS_PATH/lib -name \*.a -exec cp {} $OUT_PATH/for_external_builds/lib \;
 
