@@ -29,7 +29,7 @@ OPT_DEPS_PATH=$(pwd)/deps
 OUT_PATH=$(pwd)/out
 
 # Used for pre-compiling .pyc files
-BUILD_PYTHON_EXE=$(pwd)/cpython/cross-build/build/python.exe
+BUILD_PYTHON_EXE=$(pwd)/cpython/cross-build/build/python
 
 # Clone cpython if it's not already cloned.
 if [ ! -d "./cpython" ]
@@ -56,6 +56,11 @@ then
     echo Building build python
     python3 Tools/wasm/wasi.py configure-build-python -- --config-cache
     python3 Tools/wasm/wasi.py make-build-python
+fi
+
+# For some reason, sometimes we get .exe (probably just with wsl somehow?)
+if [ -f $BUILD_PYTHON_EXE.exe ]; then
+    BUILD_PYTHON_EXE=$BUILD_PYTHON_EXE.exe
 fi
 
 # Build python wasi
