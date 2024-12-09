@@ -12,9 +12,6 @@ CPYTHON_BRANCH="${CPYTHON_BRANCH:-v3.13.1}"
 # Weather or not to asyncify and optimize using wasm-opt
 ASYNCIFY_OPTIMIZE="${ASYNCIFY_OPTIMIZE:-1}"
 OPTIMIZE_LEVEL="${OPTIMIZE_LEVEL:-2}"
-# Remove all __pycache__ from the standard library, as it reduces size by around 2x
-# It may help with load times to keep them.
-REMOVE_PYCACHE="${REMOVE_PYCACHE:-1}"
 # Export the Python API, this increases output size by a little bit.
 # Not sure how usable it is.
 EXPORT_PYTHON_API="${EXPORT_PYTHON_API:-0}"
@@ -30,6 +27,9 @@ echo
 OPT_DEPS_PATH=$(pwd)/deps
 # Output directory
 OUT_PATH=$(pwd)/out
+
+# Used for pre-compiling .pyc files
+BUILD_PYTHON_EXE=$(pwd)/cpython/cross-build/build/python.exe
 
 # Clone cpython if it's not already cloned.
 if [ ! -d "./cpython" ]
@@ -87,11 +87,17 @@ find ./cross-build/wasm32-wasip1/Modules/ -name \*.a -exec cp {} $OUT_PATH/for_e
 find $OPT_DEPS_PATH/lib -name \*.a -exec cp {} $OUT_PATH/for_external_builds/lib \;
 rm -rf $OUT_PATH/lib/python3.*/config-3.*-*
 
-if [ $REMOVE_PYCACHE -eq "1" ]
-then
-    echo Removing __pycache__ folders from $OUT_PATH/lib
-    find $OUT_PATH/lib -name '__pycache__' -type d -exec rm -r "{}" \; 2>/dev/null || true
-fi
+# The pre-compiled .pyc files don't really work, they get ignored by python.
+# We will compile our own with `unchecked-hash` so they will be loaded regardless.
+echo Removing __pycache__ folders from $OUT_PATH/lib \(these don\'t work\)
+find $OUT_PATH/lib -name '__pycache__' -type d -exec rm -r "{}" \; 2>/dev/null || true
+
+echo Pre-compiling __pycache__ \(which will work\)
+pushd $OUT_PATH > /dev/null
+PYTHONHOME=$OUT_PATH $BUILD_PYTHON_EXE -m compileall -j 0 -f --invalidation-mode unchecked-hash ./lib
+popd > /dev/null
+# # We could do this in wasm, but it's much slower as we can't use `-j 0`...
+# wasmtime run --wasm max-wasm-stack=8388608 --dir $OUT_PATH::/ --env PYTHONHOME=/ $OUT_PATH/python3.*.wasm -m compileall -f --invalidation-mode unchecked-hash /lib
 
 if [ $ASYNCIFY_OPTIMIZE -eq "1" ]
 then
