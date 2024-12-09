@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Ensure if a command fails, the script exits.
 set -e
 
@@ -17,6 +19,11 @@ REMOVE_PYCACHE="${REMOVE_PYCACHE:-1}"
 # Not sure how usable it is.
 EXPORT_PYTHON_API="${EXPORT_PYTHON_API:-0}"
 
+echo CPython branch: $CPYTHON_BRANCH
+echo Asyncify and Optimize: $ASYNCIFY_OPTIMIZE
+echo Optimize level: $OPTIMIZE_LEVEL
+echo Export python API: $EXPORT_PYTHON_API
+echo
 
 # Pythons 'optional' dependencies
 # `./lib` and `./include` is currently from https://github.com/singlestore-labs/python-wasi/tree/main/docker
