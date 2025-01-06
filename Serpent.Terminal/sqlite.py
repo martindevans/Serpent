@@ -1,6 +1,8 @@
 ﻿import sqlite3
 import os
+import time
 
+time.sleep(1)
 os.mkdir("foo");
 
 # Connect to an SQLite database (or create it if it doesn't exist)

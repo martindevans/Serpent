@@ -6,6 +6,10 @@ import time
 
 from pathlib import Path
 
+for i in range(0, 100):
+    time.sleep(0.01)
+    #os.sched_yield()
+
 # prefix components:
 space =  '    '
 branch = '│   '

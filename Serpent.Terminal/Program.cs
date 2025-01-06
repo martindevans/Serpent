@@ -1,29 +1,52 @@
-﻿using Serpent;
+﻿using System.Diagnostics;
+using Serpent;
 using Wasmtime;
+using Wazzy.Async;
 using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Files;
 
 var e = new Engine(new Config().WithFuelConsumption(true).WithOptimizationLevel(OptimizationLevel.Speed));
 
 using var builder = PythonBuilder.Load(e, "cache.module");
 
-var python = builder
+var prebuild = builder
     .Create()
-    .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error:true))
+    .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
     .WithStdOut(() => new ConsoleLog(""))
     //.WithStdIn(() => new InMemoryFile(0, "print('hello world')"u8))
     //.WithMainFilePath("code.py")
-    .WithCode(File.ReadAllBytes("code.py"))
-    .Build();
+    .WithCode(File.ReadAllBytes("code.py"));
 
-var delay = 1;
-python.Execute();
-while (python.IsSuspended)
+var timer = new Stopwatch();
+timer.Start();
+
+var python = prebuild.Build();
+
+timer.Stop();
+Console.WriteLine($"Build: {timer.Elapsed.TotalMilliseconds}ms");
+
+timer.Start();
 {
     python.Execute();
+    while (python.IsSuspended)
+    {
+        Console.Title = $"Memory Usage: {python.MemoryBytes:N0}B";
 
-    await Task.Delay(delay);
+        if (python.SuspendedReason is TaskSuspend ts)
+        {
+            await ts.Task;
+        }
+        else if (python.SuspendedReason is SchedYieldSuspend)
+        {
+            Console.WriteLine("YIELD");
+        }
+        else
+        {
+            await Task.Delay(1);
+        }
 
-    delay <<= 1;
-    if (delay > 256)
-        delay = 1;
+        python.Execute();
+    }
 }
+timer.Stop();
+Console.WriteLine($"Execute: {timer.Elapsed.TotalMilliseconds}ms");
+Console.WriteLine($"Memory Usage: {python.MemoryBytes:N0}B");

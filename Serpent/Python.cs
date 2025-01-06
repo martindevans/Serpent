@@ -33,6 +33,11 @@ public sealed class Python
     public bool IsCompleted { get; private set; }
 
     /// <summary>
+    /// Get the reason for the last suspend (if currently suspended)
+    /// </summary>
+    public IAsyncifySuspendReason? SuspendedReason { get; private set; }
+
+    /// <summary>
     /// Get or set the amount of fuel in this runtime
     /// </summary>
     public ulong Fuel
@@ -89,10 +94,14 @@ public sealed class Python
 
         // Check if we've suspended
         IsSuspended = _instance.GetAsyncState() == AsyncState.Suspending;
+        SuspendedReason = null;
         if (IsSuspended)
         {
             _stack = default;
             _stack = _instance.StopUnwind();
+
+            SuspendedReason = _stack.Value.SuspendReason;
+
             return null;
         }
 

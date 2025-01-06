@@ -7,7 +7,7 @@
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Serpent</Title>
-    <Version>0.0.30</Version>
+    <Version>0.0.31</Version>
     <Authors>Martin Evans</Authors>
     <Description>A pure WASM based Python runner</Description>
     <PackageProjectUrl>https://github.com/martindevans/Serpent</PackageProjectUrl>
@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="Wasmtime" Version="22.0.0" />
-    <PackageReference Include="Wazzy" Version="0.0.37" />
+    <PackageReference Include="Wazzy" Version="0.0.40" />
   </ItemGroup>
 
 </Project>
