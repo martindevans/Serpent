@@ -8,7 +8,7 @@ set -e
 
 # Branch of CPython to clone
 # If changed, manually delete ./cpython/ directory if it exists.
-CPYTHON_BRANCH="${CPYTHON_BRANCH:-v3.13.1}"
+CPYTHON_BRANCH="${CPYTHON_BRANCH:-v3.13.2}"
 # Weather or not to asyncify and optimize using wasm-opt
 ASYNCIFY_OPTIMIZE="${ASYNCIFY_OPTIMIZE:-1}"
 OPTIMIZE_LEVEL="${OPTIMIZE_LEVEL:-2}"

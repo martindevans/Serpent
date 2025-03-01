@@ -6,7 +6,7 @@ on:
       cpython_branch:
         description: 'CPython branch to clone'
         required: true
-        default: 'v3.13.1'
+        default: 'v3.13.2'
         type: string
       optimize_level:
         description: 'wasm-opt optimize level'
