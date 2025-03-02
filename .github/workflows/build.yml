@@ -27,7 +27,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: CPython WASI Build in devcontainer
         uses: devcontainers/ci@v0.3
         with:
@@ -43,4 +43,30 @@ jobs:
         with:
           name: CPython-WASI-${{ inputs.cpython_branch }}
           path: ./out/
+          if-no-files-found: error
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: for_external_builds
+          path: ./out/for_external_builds/
+          if-no-files-found: error
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lib
+          path: ./out/lib/
+          if-no-files-found: error
+      
+      - run: echo "TMP_FILE_NAME=$(basename ./out/python*.wasm)" >> $GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TMP_FILE_NAME }}
+          path: ./out/${{ env.TMP_FILE_NAME }}
+          if-no-files-found: error
+      
+      - run: echo "TMP_FILE_NAME=$(basename ./out/python*_async.wasm)" >> $GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TMP_FILE_NAME }}
+          path: ./out/${{ env.TMP_FILE_NAME }}
           if-no-files-found: error
