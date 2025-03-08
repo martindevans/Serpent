@@ -32,8 +32,8 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/avril112113/build_cpython_wasi
-          cacheFrom: ghcr.io/avril112113/build_cpython_wasi
-          push: always
+          #cacheFrom: ghcr.io/avril112113/build_cpython_wasi
+          #push: always
           env: |
             CPYTHON_BRANCH=${{ inputs.cpython_branch }}
             OPTIMIZE_LEVEL=${{ inputs.optimize_level }}
