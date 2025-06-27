@@ -17,7 +17,6 @@ namespace Serpent;
 public sealed class PythonBuilder
     : IDisposable
 {
-    private const string EmbeddedWasmResourcePath = "Serpent.python3.13_async.wasm";
     private const string DefaultPythonFileName = "main.py";
     
     private readonly Module _module;
@@ -30,74 +29,28 @@ public sealed class PythonBuilder
     }
 
     /// <summary>
-    /// Create a Python builder. This loads and compiles the Python module so it can be very slow (several seconds). Supplying a cache
+    /// Create a Python builder. This loads and compiles the Python module, as it can be very slow (several seconds). Supplying a cache
     /// path will serialize the compiled module, which will significantly speed up the next load. This cache is <b>not portable</b>; do not
     /// move it between machines.
     /// </summary>
-    /// <param name="engine"></param>
-    /// <param name="cache">Optional cache path, to speed up subsequent loads</param>
-    /// <returns></returns>
-    public static PythonBuilder Load(Engine engine, string? cache = null)
+    /// <param name="engine">The WasmTime engine</param>
+    /// <param name="moduleLoader">Loads the python wasm module. Defaults to `new DefaultPythonModuleLoader()`</param>
+    /// <returns>A PythonBuilder for the given engine and module</returns>
+    public static PythonBuilder Load(Engine engine, IPythonModuleLoader? moduleLoader = null)
     {
-        var module = LoadCache(engine, cache);
-        if (module == null)
-        {
-            module = Module.FromStream(engine, EmbeddedWasmResourcePath, Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedWasmResourcePath)!);
-            SaveCache(module, cache);
-        }
-
-        return new PythonBuilder(module, engine);
+        moduleLoader ??= new DefaultPythonModuleLoader();
+        return new PythonBuilder(moduleLoader.LoadModule(engine), engine);
     }
 
-    #region caching
-    private static void TryDelete(string path)
+    /// <summary>
+    /// Shortcut for `Load(engine, new DefaultPythonModuleLoader(cachePath))`
+    /// </summary>
+    /// <param name="engine">The WasmTime engine</param>
+    /// <param name="cachePath">The path to use for caching the wasmtime module</param>
+    public static PythonBuilder Load(Engine engine, string cachePath)
     {
-        if (File.Exists(path))
-        {
-            try
-            {
-                File.Delete(path);
-            }
-            catch
-            {
-                // We tried our best to delete it
-            }
-        }
+        return Load(engine, new DefaultPythonModuleLoader(cachePath));
     }
-
-    private static Module? LoadCache(Engine engine, string? path)
-    {
-        if (string.IsNullOrEmpty(path) || !File.Exists(path))
-            return null;
-
-        try
-        {
-            return Module.DeserializeFile(engine, "python", path);
-        }
-        catch
-        {
-            // Failed to load the cached module for some reason, delete it.
-            TryDelete(path);
-        }
-
-        return null;
-    }
-
-    private static void SaveCache(Module module, string? path)
-    {
-        if (string.IsNullOrEmpty(path))
-            return;
-
-        try
-        {
-            File.WriteAllBytes(path, module.Serialize());
-        }
-        catch
-        {
-            // Something went wrong saving the cache.
-        }
-    }
-    #endregion
 
     public InnerBuilder Create()
     {
