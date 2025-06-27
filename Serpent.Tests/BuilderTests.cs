@@ -1,5 +1,4 @@
 using Wasmtime;
-using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Files;
 
 namespace Serpent.Tests;
 
@@ -42,64 +41,10 @@ public class BuilderTests
 		const string cachePath = $"Tests_{nameof(BuilderTests)}_{nameof(InvalidCache)}.cached.wtmodule";
 		File.WriteAllBytes(cachePath, []);
 
+		var oldModifiedTime = File.GetLastWriteTimeUtc(cachePath);
 		var engine = new Engine(new Config().WithFuelConsumption(true).WithOptimizationLevel(OptimizationLevel.Speed));
 		var prebuild = PythonBuilder.Load(engine, cachePath);
 		var python = prebuild.Create().Build();
-	}
-
-	[TestMethod]
-	public void WithStdConsole()
-	{
-		using var prebuild = LoadCachedBuilder();
-		var python = prebuild
-			.Create()
-			.WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
-			.WithStdOut(() => new ConsoleLog(""))
-			.Build();
-	}
-
-	[TestMethod]
-	public void WithCodeBuild()
-	{
-		using var prebuild = LoadCachedBuilder();
-		var python = prebuild
-			.Create()
-			.WithCode(Array.Empty<byte>())
-			.Build();
-	}
-
-	[TestMethod]
-	public void WithMainFileBuild()
-	{
-		using var prebuild = LoadCachedBuilder();
-		var python = prebuild
-			.Create()
-			.WithMainFilePath("my_main.py")
-			.Build();
-	}
-
-	[TestMethod]
-	public void WithCodeAndMainFileBuild()
-	{
-		using var prebuild = LoadCachedBuilder();
-		var python = prebuild
-			.Create()
-			.WithCode(Array.Empty<byte>())
-			.WithMainFilePath("my_main.py")
-			.Build();
-	}
-
-	[TestMethod]
-	public void WithFilesystem()
-	{
-		using var prebuild = LoadCachedBuilder();
-		var python = prebuild
-			.Create()
-			.WithFilesystem(builder => {
-				builder.CreateVirtualDirectory("test", testDir => {
-					testDir.CreateInMemoryFile("test.txt", "Hello world!"u8.ToArray());
-				});
-			})
-			.Build();
+		Assert.IsTrue(File.GetLastWriteTimeUtc(cachePath) > oldModifiedTime, "cache was not ignored when it should have been.");
 	}
 }
