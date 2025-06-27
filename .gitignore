@@ -1,8 +1,13 @@
 .vs
+.idea
+*.user
+
+Serpent/bin
+Serpent/obj
 
 Serpent.Terminal/bin
 Serpent.Terminal/obj
 
-Serpent/bin
-Serpent/obj
-/*.user
+Serpent.Tests/bin
+Serpent.Tests/obj
+
