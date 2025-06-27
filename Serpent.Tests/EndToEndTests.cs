@@ -54,7 +54,7 @@ public class EndToEndTests
 		Assert.IsFalse(python.IsSuspended);
 		Assert.IsTrue(python.IsCompleted);
 		Assert.IsNull(python.SuspendedReason);
-		Assert.AreEqual(exitCode, 0);
+		Assert.AreEqual(0, exitCode);
 	}
 
 	[TestMethod]
@@ -107,7 +107,7 @@ public class EndToEndTests
 			.Build();
 
 		var exitCode = RunToCompletionSync(python);
-		Assert.AreEqual(exitCode, 0);
+		Assert.AreEqual(0, exitCode);
 		Assert.IsTrue(python.IsCompleted);
 	}
 }
