@@ -41,24 +41,78 @@ public class EndToEndTests
 
 	[TestMethod]
 	public void SingleExecuteExit()
-	{
-		using var prebuild = LoadCachedBuilder();
-		var python = prebuild
-			.Create()
-			.WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
-			.WithStdOut(() => new ConsoleLog(""))
-			.WithCode(Array.Empty<byte>())
-			.Build();
+    {
+        var code = """
+                   import sys
+                   sys.exit(123)
+                   """u8.ToArray();
 
-		var exitCode = python.Execute();
+        using var prebuild = LoadCachedBuilder();
+        using var python = prebuild
+            .Create()
+            .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
+            .WithStdOut(() => new ConsoleLog(""))
+            .WithCode(code)
+            .Build();
+
+        var fuelStart = python.Fuel;
+        var exitCode = python.Execute();
+        var fuelEnd = python.Fuel;
+
+		// Fuel should have been consumed
+		Assert.IsTrue(fuelEnd < fuelStart);
+
 		// It should exit immediately, as nothing suspends.
 		Assert.IsFalse(python.IsSuspended);
 		Assert.IsTrue(python.IsCompleted);
 		Assert.IsNull(python.SuspendedReason);
-		Assert.AreEqual(0, exitCode);
-	}
+		Assert.AreEqual(123, exitCode);
 
-	[TestMethod]
+		// Resuming after completion is not allowed, check that this throws
+        Assert.ThrowsException<InvalidOperationException>(() =>
+        {
+            // ReSharper disable once AccessToDisposedClosure
+            python.Execute();
+        });
+    }
+
+    [TestMethod]
+    public void OutOfFuel()
+    {
+        var code = """
+                   import sys
+                   sys.exit(123)
+                   """u8.ToArray();
+
+        using var prebuild = LoadCachedBuilder();
+        using var python = prebuild
+                          .Create()
+                          .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
+                          .WithStdOut(() => new ConsoleLog(""))
+                          .WithCode(code)
+                          .Build();
+
+		// No fuel available
+        python.Fuel = 0;
+		Assert.AreEqual(0ul, python.Fuel);
+
+        try
+        {
+			// Execute, which should immediately fail
+            python.Execute();
+        }
+        catch (TrapException trap)
+        {
+            Assert.AreEqual(TrapCode.OutOfFuel, trap.Type);
+            Assert.AreEqual(0ul, python.Fuel);
+            return;
+        }
+
+		Assert.Fail("Did not throw!");
+    }
+
+
+    [TestMethod]
 	public void StdConsole()
 	{
 		var code = """
@@ -95,7 +149,9 @@ public class EndToEndTests
 	{
 		var code = """
 			import os
+			import sys
 			os.sched_yield()
+			sys.exit(321)
 			"""u8.ToArray();
 
 		using var prebuild = LoadCachedBuilder();
@@ -106,11 +162,19 @@ public class EndToEndTests
 			.WithCode(code)
 			.Build();
 
-		var exitCode = python.Execute();
-		Assert.IsNull(exitCode);
+		// Run once, to the yield point
+		var exitCode1 = python.Execute();
+		Assert.IsNull(exitCode1);
 		Assert.IsTrue(python.IsSuspended);
 		Assert.IsInstanceOfType<SchedYieldSuspend>(python.SuspendedReason);
-	}
+
+		// Run again, this time completing execution and exiting
+        var exitCode2 = python.Execute();
+		Assert.AreEqual(321, exitCode2);
+        Assert.IsFalse(python.IsSuspended);
+        Assert.IsTrue(python.IsCompleted);
+        Assert.IsNull(python.SuspendedReason);
+    }
 
 	[TestMethod]
 	public void Filesystem()

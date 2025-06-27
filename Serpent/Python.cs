@@ -79,6 +79,7 @@ public sealed class Python
         // Begin resuming from a previous async suspend
         if (_stack.HasValue)
             _instance.StartRewind(_stack.Value);
+        SuspendedReason = null;
 
         // This either makes the call, or does the resume
         try
@@ -94,7 +95,6 @@ public sealed class Python
 
         // Check if we've suspended
         IsSuspended = _instance.GetAsyncState() == AsyncState.Suspending;
-        SuspendedReason = null;
         if (IsSuspended)
         {
             _stack = default;
