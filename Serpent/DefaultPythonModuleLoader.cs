@@ -1,69 +1,19 @@
 using System.Reflection;
+using System.Security.Cryptography;
 using Wasmtime;
 using Module = Wasmtime.Module;
 
 namespace Serpent;
 
-public class DefaultPythonModuleLoader(string? cachePath = null) : IPythonModuleLoader
+public sealed class DefaultPythonModuleLoader(string? cachePath = null) : FileCachedPythonModuleLoader(cachePath)
 {
-	public const string EmbeddedWasmResourcePath = "Serpent.python3.13_async.wasm";
+	private const string EmbeddedWasmResourcePath = "Serpent.python3.13_async.wasm";
+	private static readonly byte[] EmbeddedResourceMd5Hash = MD5.HashData(GetResourceStream());
 
-	public Module LoadModule(Engine engine)
-	{
-		var module = LoadCache(engine, cachePath);
-		if (module == null)
-		{
-			module = Module.FromStream(engine, EmbeddedWasmResourcePath, Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedWasmResourcePath)!);
-			SaveCache(module, cachePath);
-		}
-		return module;
-	}
+	private static Stream GetResourceStream()
+		=> Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedWasmResourcePath)!;
 
-	private static void TryDelete(string path)
-	{
-		if (File.Exists(path))
-		{
-			try
-			{
-				File.Delete(path);
-			}
-			catch
-			{
-				// We tried our best to delete it
-			}
-		}
-	}
-
-	private static Module? LoadCache(Engine engine, string? path)
-	{
-		if (string.IsNullOrEmpty(path) || !File.Exists(path))
-			return null;
-
-		try
-		{
-			return Module.DeserializeFile(engine, "python", path);
-		}
-		catch
-		{
-			// Failed to load the cached module for some reason, delete it.
-			TryDelete(path);
-		}
-
-		return null;
-	}
-
-	private static void SaveCache(Module module, string? path)
-	{
-		if (string.IsNullOrEmpty(path))
-			return;
-
-		try
-		{
-			File.WriteAllBytes(path, module.Serialize());
-		}
-		catch
-		{
-			// Something went wrong saving the cache.
-		}
-	}
+	protected override string ModuleName => EmbeddedWasmResourcePath;
+	protected override Stream GetStream() => GetResourceStream();
+	protected override byte[] Hash => EmbeddedResourceMd5Hash;
 }

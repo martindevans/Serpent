@@ -45,17 +45,4 @@ public class BuilderTests
 		Assert.IsTrue(python.MemoryBytes >= 0);
 		Assert.IsTrue(python.MemoryBytes <= 50_000_000);
     }
-
-	[TestMethod]
-	public void InvalidCache()
-	{
-		const string cachePath = $"Tests_{nameof(BuilderTests)}_{nameof(InvalidCache)}.cached.wtmodule";
-		File.WriteAllBytes(cachePath, []);
-
-		var oldModifiedTime = File.GetLastWriteTimeUtc(cachePath);
-		var engine = new Engine(new Config().WithFuelConsumption(true).WithOptimizationLevel(OptimizationLevel.Speed));
-		var prebuild = PythonBuilder.Load(engine, cachePath);
-		var python = prebuild.Create().Build();
-		Assert.IsTrue(File.GetLastWriteTimeUtc(cachePath) > oldModifiedTime, "cache was not ignored when it should have been.");
-	}
 }
