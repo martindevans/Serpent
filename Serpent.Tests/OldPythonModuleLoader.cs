@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using Wasmtime;
+using Module = Wasmtime.Module;
 
 namespace Serpent.Tests;
 
@@ -14,7 +15,8 @@ public class OldPythonModuleLoader(string? cachePath = null) : FileCachedPythonM
 	private static Stream GetResourceStream()
 		=> Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedWasmResourcePath)!;
 
-	protected override string ModuleName => EmbeddedWasmResourcePath;
-	protected override Stream GetStream() => GetResourceStream();
+	protected override Module LoadModuleForCache(Engine engine)
+		=> Module.FromStream(engine, EmbeddedWasmResourcePath, GetResourceStream());
+
 	protected override byte[] Hash => EmbeddedResourceMd5Hash;
 }

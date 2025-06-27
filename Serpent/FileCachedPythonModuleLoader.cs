@@ -3,11 +3,22 @@ using Wasmtime;
 
 namespace Serpent;
 
+/// <summary>
+/// Caches the wasmtime module at a given path for future loads to be faster.
+/// </summary>
+/// <param name="cachePath">Path to save and load the cached module from. If null, disables caching.</param>
 public abstract class FileCachedPythonModuleLoader(string? cachePath = null) : IPythonModuleLoader
 {
-	protected abstract string ModuleName { get; }
-	protected abstract Stream GetStream();
+	/// <summary>
+	/// Load a wasmtime module when it isn't already cached.
+	/// </summary>
+	protected abstract Module LoadModuleForCache(Engine engine);
 
+	/// <summary>
+	/// Prepended to the cached file to ensure outdated wasm blobs are not loaded.
+	/// This should be a hash of the input wasm blob and should be a fixed size.
+	/// A good option is the MD5 hash algorithm.
+	/// </summary>
 	protected abstract byte[] Hash { get; }
 
 	public Module LoadModule(Engine engine)
@@ -15,7 +26,7 @@ public abstract class FileCachedPythonModuleLoader(string? cachePath = null) : I
 		var module = LoadCache(engine);
 		if (module != null) return module;
 
-		module = Module.FromStream(engine, ModuleName, GetStream());
+		module = LoadModuleForCache(engine);
 		SaveCache(module);
 		return module;
 	}
@@ -27,9 +38,9 @@ public abstract class FileCachedPythonModuleLoader(string? cachePath = null) : I
 
 		try {
 			using var stream = File.OpenRead(cachePath);
-			var md5Hash = new byte[MD5.HashSizeInBytes];
-			stream.ReadExactly(md5Hash);
-			if (!md5Hash.SequenceEqual(Hash))
+			var hash = new byte[Hash.Length];
+			stream.ReadExactly(hash);
+			if (!hash.SequenceEqual(Hash))
 				return null;
 			var contents = new byte[stream.Length - stream.Position];
 			stream.ReadExactly(contents);
