@@ -1,3 +1,4 @@
+using System.Text;
 using Wasmtime;
 using Wazzy.Async;
 using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Files;
@@ -55,6 +56,38 @@ public class EndToEndTests
 		Assert.IsTrue(python.IsCompleted);
 		Assert.IsNull(python.SuspendedReason);
 		Assert.AreEqual(0, exitCode);
+	}
+
+	[TestMethod]
+	public void StdConsole()
+	{
+		var code = """
+			import sys
+			sys.stderr.write("Hello stderr")
+			sys.stdout.write("Hello stdout")
+			assert sys.stdin.readline() == "Hello from stdin"
+			"""u8.ToArray();
+
+		var stderr = new MemoryStream();
+		var stdout = new MemoryStream();
+		var stdin = new MemoryStream();
+
+		using var prebuild = LoadCachedBuilder();
+		var python = prebuild
+			.Create()
+			.WithStdErr(() => new InMemoryFile(0, [], backing: stderr))
+			.WithStdOut(() => new InMemoryFile(0, [], backing: stdout))
+			.WithStdIn(() => new InMemoryFile(0, "Hello from stdin"u8, backing: stdin))
+			.WithCode(code)
+			.Build();
+
+		var exitCode = RunToCompletionSync(python);
+		Assert.AreEqual(0, exitCode);
+		Assert.IsTrue(python.IsCompleted);
+
+		Assert.AreEqual("Hello stderr", Encoding.UTF8.GetString(stderr.ToArray()));
+		Assert.AreEqual("Hello stdout", Encoding.UTF8.GetString(stdout.ToArray()));
+		// stdin is tested on the python side, it'll return non-zero exit code
 	}
 
 	[TestMethod]
