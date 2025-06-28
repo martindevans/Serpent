@@ -1,7 +1,9 @@
 using System.Text;
 using Wasmtime;
 using Wazzy.Async;
+using Wazzy.WasiSnapshotPreview1.Clock;
 using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Files;
+using Wazzy.WasiSnapshotPreview1.Random;
 
 namespace Serpent.Tests;
 
@@ -143,4 +145,61 @@ public class EndToEndTests
 		Assert.AreEqual(0, exitCode);
 		Assert.IsTrue(python.IsCompleted);
 	}
+
+    [TestMethod]
+    public void WithClock()
+    {
+        var code = """
+                   import datetime
+                   now = datetime.datetime.now()
+                   print(now)
+                   """u8.ToArray();
+
+        var stdout = new MemoryStream();
+
+        using var prebuild = LoadCachedBuilder();
+        using var python = prebuild
+                          .Create()
+                          .WithClock<ManualClock>(() => new ManualClock(new DateTime(2134, 5, 7), TimeSpan.FromMicroseconds(1)))
+                          .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
+                          .WithStdOut(() => new InMemoryFile(0, [], backing: stdout))
+                          .WithCode(code)
+                          .Build();
+
+        python.Execute();
+
+        Assert.IsTrue(python.IsCompleted);
+        Assert.IsFalse(python.IsSuspended);
+        Assert.AreEqual("2134-05-06 23:00:00\n", Encoding.UTF8.GetString(stdout.ToArray()));
+    }
+
+    [TestMethod]
+    public void WithRandom()
+    {
+        var code = """
+                   import random
+                   print(str(random.randint(0, 1000)))
+                   """u8.ToArray();
+
+        var stdout = new MemoryStream();
+
+        using var prebuild = LoadCachedBuilder();
+        using var python = prebuild
+                          .Create()
+                          .WithRandomSource(() => new SeededRandomSource(123))
+                          .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
+                          .WithStdOut(() => new InMemoryFile(0, [], backing: stdout))
+                          .WithCode(code)
+                          .Build();
+
+        python.Execute();
+
+        Assert.IsTrue(python.IsCompleted);
+        Assert.IsFalse(python.IsSuspended);
+
+        // In theory it's possible this test could break if the Python blob changes in the future. Python is initialising
+        // it's internal RNG from the sseded random source, and then producing a number from that. If Python changes the
+        // internals of that process the final value might change. The important thing is it doesn't change between runs.
+        Assert.AreEqual("727\n", Encoding.UTF8.GetString(stdout.ToArray()));
+    }
 }
