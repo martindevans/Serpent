@@ -221,10 +221,12 @@ public class EndToEndTests
 
         var stdout = new MemoryStream();
 
+        var dt = new DateTime(new DateOnly(2134, 5, 7), new TimeOnly(11, 12, 13, 0), DateTimeKind.Utc);
+
         using var prebuild = LoadCachedBuilder();
         using var python = prebuild
                           .Create()
-                          .WithClock<ManualClock>(() => new ManualClock(new DateTime(2134, 5, 7), TimeSpan.FromMicroseconds(1)))
+                          .WithClock<ManualClock>(() => new ManualClock(dt, TimeSpan.FromMicroseconds(1)))
                           .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
                           .WithStdOut(() => new InMemoryFile(0, [], backing: stdout))
                           .WithCode(code)
@@ -234,7 +236,7 @@ public class EndToEndTests
 
         Assert.IsTrue(python.IsCompleted);
         Assert.IsFalse(python.IsSuspended);
-        Assert.AreEqual("2134-05-06 23:00:00\n", Encoding.UTF8.GetString(stdout.ToArray()));
+        Assert.AreEqual("2134-05-07 11:12:13\n", Encoding.UTF8.GetString(stdout.ToArray()));
     }
 
     [TestMethod]
