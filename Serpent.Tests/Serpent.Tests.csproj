@@ -20,4 +20,8 @@
       <ProjectReference Include="..\Serpent\Serpent.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="python3.13_async_99a76c95efe6a5e49c16258f31b0048a8c0a937f.wasm" />
+    </ItemGroup>
+
 </Project>
