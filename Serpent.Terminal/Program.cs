@@ -4,9 +4,14 @@ using Wasmtime;
 using Wazzy.Async;
 using Wazzy.WasiSnapshotPreview1.FileSystem.Implementations.VirtualFileSystem.Files;
 
+var timer = new Stopwatch();
+
 var e = new Engine(new Config().WithFuelConsumption(true).WithOptimizationLevel(OptimizationLevel.Speed));
 
+timer.Restart();
 using var builder = PythonBuilder.Load(e, "cache.module");
+timer.Stop();
+Console.WriteLine($"Module Load: {timer.Elapsed.TotalMilliseconds:N0}ms");
 
 var prebuild = builder
     .Create()
@@ -16,15 +21,12 @@ var prebuild = builder
     //.WithMainFilePath("code.py")
     .WithCode(File.ReadAllBytes("code.py"));
 
-var timer = new Stopwatch();
-timer.Start();
-
+timer.Restart();
 var python = prebuild.Build();
-
 timer.Stop();
-Console.WriteLine($"Build: {timer.Elapsed.TotalMilliseconds}ms");
+Console.WriteLine($"Build: {timer.Elapsed.TotalMilliseconds:N0}ms");
 
-timer.Start();
+timer.Restart();
 {
     python.Execute();
     while (python.IsSuspended)
@@ -48,5 +50,5 @@ timer.Start();
     }
 }
 timer.Stop();
-Console.WriteLine($"Execute: {timer.Elapsed.TotalMilliseconds}ms");
+Console.WriteLine($"Execute: {timer.Elapsed.TotalMilliseconds:N0}ms");
 Console.WriteLine($"Memory Usage: {python.MemoryBytes:N0}B");
