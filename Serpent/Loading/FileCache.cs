@@ -6,7 +6,7 @@ namespace Serpent.Loading;
 /// Cache loaded module to disk. This compiled module is almost instantaneous to load
 /// but it is <b>not portable</b>; do not move it between machines!
 /// </summary>
-public class FileCache
+public sealed class FileCache
     : IPythonModuleLoader
 {
     private readonly string _cachePath;
