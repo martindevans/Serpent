@@ -1,3 +1,4 @@
+using Serpent.Loading;
 using Wasmtime;
 
 namespace Serpent.Tests;
@@ -22,7 +23,7 @@ public class BuilderTests
 	{
 		var engine = new Engine(new Config().WithFuelConsumption(true).WithOptimizationLevel(OptimizationLevel.Speed));
 
-		using var prebuild = PythonBuilder.Load(engine);
+		using var prebuild = PythonBuilder.Load(engine, new DefaultPythonModuleLoader());
 		using var python = prebuild
 			.Create()
             .WithFuel(1_234_567_890)

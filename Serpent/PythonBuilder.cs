@@ -1,3 +1,4 @@
+using Serpent.Loading;
 using System.Reflection;
 using Wasmtime;
 using Wazzy.Extensions;
@@ -29,27 +30,24 @@ public sealed class PythonBuilder
     }
 
     /// <summary>
-    /// Create a Python builder. This loads and compiles the Python module, as it can be very slow (several seconds). Supplying a cache
-    /// path will serialize the compiled module, which will significantly speed up the next load. This cache is <b>not portable</b>; do not
-    /// move it between machines.
+    /// Create a Python builder. 
     /// </summary>
     /// <param name="engine">The WasmTime engine</param>
-    /// <param name="moduleLoader">Loads the python wasm module. Defaults to `new DefaultPythonModuleLoader()`</param>
+    /// <param name="moduleLoader">Loads the python wasm module.</param>
     /// <returns>A PythonBuilder for the given engine and module</returns>
-    public static PythonBuilder Load(Engine engine, IPythonModuleLoader? moduleLoader = null)
+    public static PythonBuilder Load(Engine engine, IPythonModuleLoader moduleLoader)
     {
-        moduleLoader ??= new DefaultPythonModuleLoader();
         return new PythonBuilder(moduleLoader.LoadModule(engine), engine);
     }
 
     /// <summary>
-    /// Shortcut for `Load(engine, new DefaultPythonModuleLoader(cachePath))`
+    /// Shortcut for <code>new FileCache(cachePath, new DefaultPythonModuleLoader()))</code>
     /// </summary>
     /// <param name="engine">The WasmTime engine</param>
     /// <param name="cachePath">The path to use for caching the wasmtime module</param>
     public static PythonBuilder Load(Engine engine, string cachePath)
     {
-        return Load(engine, new DefaultPythonModuleLoader(cachePath));
+        return Load(engine, new FileCache(cachePath, new DefaultPythonModuleLoader()));
     }
 
     public InnerBuilder Create()
