@@ -71,7 +71,7 @@ public class EndToEndTests
 		Assert.AreEqual(123, exitCode);
 
 		// Resuming after completion is not allowed, check that this throws
-        Assert.ThrowsException<InvalidOperationException>(() =>
+        Assert.Throws<InvalidOperationException>(() =>
         {
             // ReSharper disable once AccessToDisposedClosure
             python.Execute();
