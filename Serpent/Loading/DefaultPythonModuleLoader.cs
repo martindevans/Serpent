@@ -11,7 +11,7 @@ namespace Serpent.Loading;
 public sealed class DefaultPythonModuleLoader
     : IPythonModuleLoader
 {
-    private const string EmbeddedWasmResourcePath = "Serpent.python3.13_async.wasm";
+    private const string EmbeddedWasmResourcePath = "Serpent.python3.14_async.wasm";
 	private static readonly ReadOnlyMemory<byte> EmbeddedResourceMd5Hash = MD5.HashData(GetResourceStream());
 
 	private static Stream GetResourceStream()
