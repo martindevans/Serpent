@@ -22,7 +22,7 @@
     <EmbeddedResource Include="lib.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="python3.13_async.wasm" />
+    <EmbeddedResource Include="python3.14_async.wasm" />
   </ItemGroup>
 
   <ItemGroup>
