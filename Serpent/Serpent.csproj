@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="Wasmtime" Version="34.0.2" />
-    <PackageReference Include="Wazzy" Version="0.0.42" />
+    <PackageReference Include="Wazzy" Version="0.0.45" />
   </ItemGroup>
 
 </Project>
