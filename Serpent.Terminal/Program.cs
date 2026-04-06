@@ -14,12 +14,12 @@ timer.Stop();
 Console.WriteLine($"Module Load: {timer.Elapsed.TotalMilliseconds:N0}ms");
 
 var prebuild = builder
-    .Create()
-    .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
-    .WithStdOut(() => new ConsoleLog(""))
-    //.WithStdIn(() => new InMemoryFile(0, "print('hello world')"u8))
-    //.WithMainFilePath("code.py")
-    .WithCode(File.ReadAllBytes("code.py"));
+              .Create()
+              .WithStdErr(() => new ConsoleLog("", ConsoleColor.DarkRed, error: true))
+              .WithStdOut(() => new ConsoleLog(""))
+               //.WithStdIn(() => new InMemoryFile(0, "print('hello world')"u8))
+               //.WithMainFilePath("code.py")
+              .WithCode(File.ReadAllBytes("sqlite.py"));
 
 timer.Restart();
 var python = prebuild.Build();

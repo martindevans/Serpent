@@ -293,6 +293,7 @@ public sealed class PythonBuilder
 
                 _fs(dir);
             });
+            builder.Seed(562390823);
             var fs = builder.Build();
 
             // Instantiate module
