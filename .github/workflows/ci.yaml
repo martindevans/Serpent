@@ -33,6 +33,12 @@ jobs:
     - name: Run tests
       run: dotnet test /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
 
+    - name: Acquire Nuget publishing token
+      uses: NuGet/login@v1.2.0
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: Publish
-      if: github.ref == 'refs/heads/master' && github.repository == 'martindevans/Serpent'
-      run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}} -SkipDuplicate
+      if: github.event_name == 'push'
+      run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{ steps.login.outputs.NUGET_API_KEY }} -SkipDuplicate
